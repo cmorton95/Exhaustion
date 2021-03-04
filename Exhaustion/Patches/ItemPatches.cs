@@ -9,6 +9,9 @@ using Config = Exhaustion.Utility.RebalanceConfig;
 
 namespace Exhaustion.Patches
 {
+    /// <summary>
+    ///     Patch Awake to use configured multipliers for food
+    /// </summary>
     [HarmonyPatch(typeof(ItemDrop), "Awake")]
     class ItemDropAwakePatch
     {

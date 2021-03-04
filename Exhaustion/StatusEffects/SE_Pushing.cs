@@ -38,6 +38,7 @@ namespace Exhaustion.StatusEffects
 
         public override void ModifySpeed(ref float speed)
         {
+            //TODO: Consider allowing configuration
             speed *= 0.85f;
         }
     }

@@ -34,6 +34,7 @@ namespace Exhaustion.StatusEffects
 
             var weight = player.GetInventory().GetTotalWeight() / threshold;
 
+            //interp between max and min speed by x^2
             var mult = Mathf.Lerp(Config.EncumberanceAltMaxSpeed.Value, Config.EncumberanceAltMinSpeed.Value, weight * weight );
             speed *= mult;
         }

@@ -18,7 +18,7 @@ namespace Exhaustion.Utility
             {
                 if (_sweat == null)
                 {
-                    //ugly horrible way of retrieving the encumbered sprite, if you know a better way *please* tell me
+                    //ugly horrible way of retrieving the wet sprite, if you know a better way *please* tell me
                     var wet = ObjectDB.instance.GetStatusEffect("Wet");
                     if (wet != null)
                     {

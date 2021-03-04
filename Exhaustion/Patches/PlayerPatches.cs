@@ -13,8 +13,9 @@ namespace Exhaustion.Patches
 {
     public static class PlayerPatches
     {
-        
-
+        /// <summary>
+        ///     Patch Awake to inject our configured values and apply the Encumberance status effect if enabled
+        /// </summary>
         [HarmonyPatch(typeof(Player), "Awake")]
         class PlayerAwakePatch
         {
@@ -37,7 +38,7 @@ namespace Exhaustion.Patches
         }
 
         /// <summary>
-        ///     Patch have stamina result to allow going into negative stamina to allow regen delay punish to fire
+        ///     Patch HaveStamina result to allow going into negative stamina
         /// </summary>
         [HarmonyPatch(typeof(Player), "HaveStamina")]
         class PlayerHaveStaminaPatch
@@ -60,6 +61,9 @@ namespace Exhaustion.Patches
             }
         }
 
+        /// <summary>
+        ///     Patch CheckRun to allow the player to continue sprinting into negative stamina values and to apply the "Pushing" and "Exhausted" status effects when thresholds are met
+        /// </summary>
         [HarmonyPatch(typeof(Player), "CheckRun")]
         class PlayerCheckRunPatch
         {
@@ -67,6 +71,7 @@ namespace Exhaustion.Patches
             {
                 if (Config.ExhaustionEnable.Value)
                 {
+                    //We need to check ___m_run (Player.m_run) to see if the player is holding the run key
                     if (__instance.GetStamina() <= 0f && __instance.GetStamina() > Config.StaminaMinimum.Value && ___m_run)
                     {
                         var seman = __instance.GetSEMan();
@@ -78,6 +83,7 @@ namespace Exhaustion.Patches
                         __result = !seman.HaveStatusEffect("Exhausted");
                     }
 
+                    //If stamina falls below the exhaustion threshold apply acceleration debuff and "Exhausted" status effect
                     if (__instance.GetStamina() <= Config.ExhaustionThreshold.Value)
                     {
                         __instance.m_acceleration = Config.STAM_EXH_ACCEL;
@@ -92,7 +98,7 @@ namespace Exhaustion.Patches
         }
 
         /// <summary>
-        ///     Patch stamina usage to increase regen delay when reaching 0 stamina to punish stamina mis-management
+        ///     Patch UseStamina to apply usage multiplier and prevent stamina usage in place-mode
         /// </summary>
         [HarmonyPatch(typeof(Player), "UseStamina")]
         class PlayerUseStaminaPatch
@@ -110,26 +116,31 @@ namespace Exhaustion.Patches
             }
         }
 
+        /// <summary>
+        ///     Patch RPC_UseStamina to prevent it from clamping stamina to positive values
+        /// </summary>
         [HarmonyPatch(typeof(Player), "RPC_UseStamina")]
         class PlayerRPCUseStaminaPatch
         {
             static void Prefix(Player __instance, out float __state)
             {
+                //Store current stamina in state before RPC_UseStamina is executed
                 __state = __instance.GetStamina();
             }
 
             static void Postfix(float v, Player __instance, ref float ___m_stamina, float __state)
             {
-                if (__instance.GetStamina() <= 0f)
+                //If in negative stamina values and the original state - v (the amount of stamina used) is also negative, clamp stamina to the configured minimum value instead 
+                if (__instance.GetStamina() <= 0f && __state - v < 0f)
                 {
-                    if (__state - v < 0f)
-                    {
-                        ___m_stamina = Mathf.Clamp(__state - v, Config.StaminaMinimum.Value, __state);
-                    }
+                    ___m_stamina = Mathf.Clamp(__state - v, Config.StaminaMinimum.Value, __state);
                 }
             }
         }
 
+        /// <summary>
+        ///     Patch SetMaxStamina to prevent it from resetting stamina to positive values similarly to RPC_UseStamina
+        /// </summary>
         [HarmonyPatch(typeof(Player), "SetMaxStamina")]
         class PlayerSetMaxStaminaPatch
         {
@@ -147,6 +158,9 @@ namespace Exhaustion.Patches
             }
         }
 
+        /// <summary>
+        ///     Patch UpdateStats to remove the "Pushing" and "Exhausted" status effects when appropriate
+        /// </summary>
         [HarmonyPatch(typeof(Player), "UpdateStats")]
         class PlayerUpdateStatsPatch
         {
@@ -165,6 +179,9 @@ namespace Exhaustion.Patches
             }
         }
 
+        /// <summary>
+        ///     Patch IsEncumbered to use configured values, accounting for modifications to the players max carry weight
+        /// </summary>
         [HarmonyPatch(typeof(Player), "IsEncumbered")]
         class PlayerIsEncumberedPatch
         {
@@ -175,7 +192,7 @@ namespace Exhaustion.Patches
         }
 
         /// <summary>
-        ///     Patch base HP, stamina, stamina regen and stamina regen delay
+        ///     Patch GetTotalFoodValue base HP and stamina, unfortunately requires reimplementation of method as hp and stamina values were inlined
         /// </summary>
         [HarmonyPatch(typeof(Player), "GetTotalFoodValue")]
         class PlayerTotalFoodValuePatch
@@ -196,7 +213,7 @@ namespace Exhaustion.Patches
         }
 
         /// <summary>
-        ///     Patch base food hp function to have UI appear properly
+        ///     Patch GetBaseFoodHP to have UI appear properly
         /// </summary>
         [HarmonyPatch(typeof(Player), "GetBaseFoodHP")]
         class PlayerBaseFoodHPPatch
@@ -207,10 +224,10 @@ namespace Exhaustion.Patches
             }
         }
 
+        /* TECHNICALLY NOT PLAYER PATCHES BUT THEY FEEL LIKE THEY BELONG HERE */
+
         /// <summary>
-        ///     Patch blocktimer to make parrying more rewarding but harder to pull off
-        ///     
-        ///     ~halve time available to parry
+        ///     Patch BlockAttack to allow customisation of parry timing
         /// </summary>
         [HarmonyPatch(typeof(Humanoid), "BlockAttack")]
         class HumanoidBlockAttackPatch
@@ -226,7 +243,7 @@ namespace Exhaustion.Patches
 
                 if (timerVal > Config.ParryTime.Value && timerVal < 0.25f && timerVal != -1.0f)
                 {
-                    blockTimer.SetValue(0.25f); //skip parry after 0.13
+                    blockTimer.SetValue(0.25f); //skip parry @0.25
                 }
                 else if (timerVal <= Config.ParryTime.Value && currentBlocker.m_shared.m_timedBlockBonus > 1.0f)
                 {
@@ -241,6 +258,11 @@ namespace Exhaustion.Patches
             }
         }
 
+        /// <summary>
+        ///     Patch Attack GetStaminaUsage to use configured weapon weight scaling
+        ///     
+        ///     TODO: Consider allowing configuration of lerp values
+        /// </summary>
         [HarmonyPatch(typeof(Attack), "GetStaminaUsage")]
         class AttackGetStaminaUsagePatch
         {
