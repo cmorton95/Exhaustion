@@ -241,18 +241,21 @@ namespace Exhaustion.Patches
 
                 var currentBlocker = (ItemDrop.ItemData)traverse.Method("GetCurrentBlocker").GetValue();
 
-                if (timerVal > Config.ParryTime.Value && timerVal < 0.25f && timerVal != -1.0f)
+                //Use configured parry time
+                if (timerVal > Config.ParryTime.Value && timerVal != -1.0f)
                 {
-                    blockTimer.SetValue(0.25f); //skip parry @0.25
+                    blockTimer.SetValue(0.26f); //skip parry timing @0.25
                 }
                 else if (timerVal <= Config.ParryTime.Value && currentBlocker.m_shared.m_timedBlockBonus > 1.0f)
                 {
+                    blockTimer.SetValue(0.01f);
                     __state = currentBlocker.m_shared.m_timedBlockBonus * __instance.m_blockStaminaDrain * Config.ParryRefundMultiplier.Value;
                 }
             }
 
             static void Postfix(bool __result, Player __instance, float __state)
             {
+                //Refund stamina if enabled using stored value in state
                 if (__result && __state > 0.0f && Config.ParryRefundEnable.Value)
                     __instance.AddStamina(__state);
             }
