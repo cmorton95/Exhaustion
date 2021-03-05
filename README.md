@@ -15,6 +15,9 @@ The plugin comes pre-configured with settings that make gameplay more interestin
 ## Requirements
 * [BepInEx](https://valheim.thunderstore.io/package/denikson/BepInExPack_Valheim/)
 
+## Installation
+Install like any other BepInEx plugin, drop the dll into the BepInEx folder in the Valheim game directory. Configuration is done through the 7dd.dev.exhaustion.cfg file under BepInEx/config.
+
 ## Notes
 Completely untested in multiplayer. If every client (and presumably the server) has the mod it might work, but I may not support issues with multiplayer.
 
