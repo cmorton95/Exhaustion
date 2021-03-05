@@ -22,3 +22,6 @@ Install like any other BepInEx plugin, drop the dll into the BepInEx folder in t
 Completely untested in multiplayer. If every client (and presumably the server) has the mod it might work, but I may not support issues with multiplayer.
 
 Please report any issues on Github.
+
+## Source
+[Github](https://github.com/cmorton95/Exhaustion)
