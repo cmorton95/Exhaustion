@@ -49,10 +49,13 @@ namespace Exhaustion.Utility
         public static ConfigEntry<float> EncumberanceAltThreshold { get; private set; }
         public static ConfigEntry<float> EncumberedDrain { get; private set; }
 
+        //Nexus update support
+        public static ConfigEntry<int> NexusID { get; private set; }
+
         public static void Bind(ConfigFile config)
         {
             //Stamina
-            BaseStamina = config.Bind("Player", "BaseStamina", 75f, "Base player stamina; vanilla: 75");
+            BaseStamina = config.Bind("Stamina", "BaseStamina", 75f, "Base player stamina; vanilla: 75");
             StaminaMinimum = config.Bind("Stamina", "StaminaMinimum", -50f, "Base stamina minimum, stamina is not usable in negative values but can be reached by using more stamina than you have; vanilla: 0");
             StaminaRegen = config.Bind("Stamina", "StaminaRegen", 12f, "Base stamina regen; vanilla: 6");
             StaminaDelay = config.Bind("Stamina", "StaminaDelay", 1.75f, "Base stamina regen delay; vanilla: 1");
@@ -90,6 +93,9 @@ namespace Exhaustion.Utility
             EncumberanceAltMaxSpeed = config.Bind("Encumberance", "EncumberanceAltMaxSpeed", 1.1f, "The maximum speed multiplier applied when unencumbered");
             EncumberanceAltThreshold = config.Bind("Encumberance", "EncumberanceAltThreshold", 600f, "The carry weight threshold at which to apply the encumbered status");
             EncumberedDrain = config.Bind("Encumberance", "EncumberanceDrain", 2f, "Base stamina drain when encumbered, applies regardless of alternative encumberance; vanilla: 10");
+
+            //NexusID
+            NexusID = config.Bind("Utility", "NexusID", 297, "Nexus Mod ID for updates, do not change");
         }
     }
 }
