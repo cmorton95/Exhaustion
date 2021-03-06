@@ -12,7 +12,7 @@ namespace Exhaustion
     /// <summary>
     ///     Load harmony patches
     /// </summary>
-    [BepInPlugin("dev.7dd.exhaustion", "Exhaustion", "1.0.0.0")]
+    [BepInPlugin("dev.7dd.exhaustion", "Exhaustion", "1.0.2")]
     public class ExhaustionPlugin : BaseUnityPlugin
     {
         public void Awake()
