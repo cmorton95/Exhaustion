@@ -7,7 +7,8 @@ The plugin comes pre-configured with settings that make gameplay more interestin
 * Modify base values such as Health, Stamina (inc. Regen/Delay, and Jump and Dodge costs), and Carry weight
 * Configuration of food health, stamina and burn times
 * Allow for negative stamina values similarly to Dark Souls games to make running out of stamina more punishing thereby incurring longer regen delays
-* Allow sprinting into negative stamina values with the risk of becoming Exhausted(tm) if done for too long
+* Allow sprinting into negative stamina values (called "Pushing") with the risk of becoming Exhausted(tm) if done for too long
+* Option to 'Warm' the player when Pushing, reducing wetness and temporarily removing coldness
 * Alternative Encumberance system allowing you to exceed carry weight at the cost of movement speed up to a configurable threshold
 * Customisation of Parry timing to allow for more or less time to parry (parry time is halved by default)
 * Parry stamina refunds, movement speed and acceleration modifications, no stamina requirement for building, multipliers galore and more!
