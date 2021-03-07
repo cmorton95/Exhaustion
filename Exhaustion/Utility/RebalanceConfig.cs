@@ -1,9 +1,4 @@
 ﻿using BepInEx.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Exhaustion.Utility
 {
@@ -39,6 +34,9 @@ namespace Exhaustion.Utility
         public static ConfigEntry<float> ExhaustionThreshold { get; private set; }
         public static ConfigEntry<float> ExhaustionRecoveryThreshold { get; private set; }
         public static ConfigEntry<float> ExhaustionSpeedMultiplier { get; private set; }
+        public static ConfigEntry<float> PushingSpeedMultiplier { get; private set; }
+        public static ConfigEntry<bool> PushingWarms { get; private set; }
+        public static ConfigEntry<float> PushingWarmRate { get; private set; }
         public static float STAM_EXH_ACCEL => 0.02f;
 
         //Encumberance
@@ -81,10 +79,13 @@ namespace Exhaustion.Utility
             FoodBurnTimeMultiplier = config.Bind("Food", "FoodBurnTimeMultiplier", 1.5f, "Multiplier applied to food burn time; vanilla: 1");
 
             //Exhaustion
-            ExhaustionEnable = config.Bind("Exhaustion", "ExhaustionEnable", true, "Enable or disable exhaustion debuff");
+            ExhaustionEnable = config.Bind("Exhaustion", "ExhaustionEnable", true, "Enable or disable exhaustion sprinting system, player will enter 'pushing' state when sprinting below 0 stamina, and 'exhausted' state at the configured exhaustion threshold");
             ExhaustionThreshold = config.Bind("Exhaustion", "ExhaustionThreshold", -40f, "Stamina threshold to activate exhaustion debuff");
             ExhaustionRecoveryThreshold = config.Bind("Exhaustion", "ExhaustionRecoveryThreshold", 0.8f, "Stamina percentage (where 0.0 = 0%, 1.0 = 100%) threshold to deactivate exhaustion debuff");
-            ExhaustionSpeedMultiplier = config.Bind("Exhaustion", "ExhaustionSpeedModifier", 0.25f, "Movement speed modifier applied when exhausted");
+            ExhaustionSpeedMultiplier = config.Bind("Exhaustion", "ExhaustionSpeedModifier", 0.25f, "Movement speed multiplier applied when exhausted (note this stacks with the pushing speed modifier)");
+            PushingSpeedMultiplier = config.Bind("Exhaustion", "PushingSpeedModifier", 0.85f, "Movement speed multiplier applied when pushing (sprinting below 0 stamina)");
+            PushingWarms = config.Bind("Exhaustion", "PushingWarms", true, "Enable or disable the pushing debuff 'warming' the player (reduces time remaining on 'Wet' debuff and temporarily removes 'Cold' debuff)");
+            PushingWarmRate = config.Bind("Exhaustion", "PushingWarmRate", 4f, "The rate at which pushing warms the player");
 
             //Encumberance
             BaseCarryWeight = config.Bind("Encumberance", "BaseCarryWeight", 300f, "Base carry weight; vanilla: 300");

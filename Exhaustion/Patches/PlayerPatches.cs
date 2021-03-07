@@ -1,13 +1,8 @@
-﻿using BepInEx.Configuration;
-using HarmonyLib;
+﻿using HarmonyLib;
 using Exhaustion.StatusEffects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using Config = Exhaustion.Utility.RebalanceConfig;
+using System;
 
 namespace Exhaustion.Patches
 {
@@ -279,6 +274,24 @@ namespace Exhaustion.Patches
 
                     __result += lerp;
                 }
+            }
+        }
+
+        [HarmonyPatch(typeof(SEMan), "AddStatusEffect")]
+        [HarmonyPatch(new Type[] { typeof(string), typeof(bool) })]
+        class SEManAddStatusEffectPatch
+        {
+            static bool Prefix(ref StatusEffect __result, string name, SEMan __instance)
+            {
+                if (string.Equals(name, "Cold") && Config.PushingWarms.Value)
+                {
+                    if (__instance.HaveStatusEffect("Pushing"))
+                    {
+                        __result = null;
+                        return false;
+                    }
+                }
+                return true;
             }
         }
     }

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using HarmonyLib;
+using Config = Exhaustion.Utility.RebalanceConfig;
 
 namespace Exhaustion.StatusEffects
 {
@@ -31,15 +28,27 @@ namespace Exhaustion.StatusEffects
             base.Setup(character);
         }
 
-        public void UpdateTTL(float ttl)
+        public override void UpdateStatusEffect(float dt)
         {
-            m_ttl = ttl;
+            if (Config.PushingWarms.Value)
+            {
+                var seman = m_character.GetSEMan();
+                if (seman.HaveStatusEffect("Wet"))
+                {
+                    var wet = seman.GetStatusEffect("Wet");
+                    var time = Traverse.Create(wet).Field("m_time");
+                    time.SetValue((float)time.GetValue() + (Config.PushingWarmRate.Value * dt));
+                }
+                if (seman.HaveStatusEffect("Cold"))
+                {
+                    seman.RemoveStatusEffect("Cold");
+                }
+            }
         }
 
         public override void ModifySpeed(ref float speed)
         {
-            //TODO: Consider allowing configuration
-            speed *= 0.85f;
+            speed *= Config.PushingSpeedMultiplier.Value;
         }
     }
 }
