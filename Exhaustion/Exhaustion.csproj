@@ -72,6 +72,9 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>E:\SteamLibrary\steamapps\common\Valheim\valheim_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
+    <Reference Include="ValheimLib">
+      <HintPath>import\ValheimLib.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Patches\ItemPatches.cs" />
@@ -81,6 +84,7 @@
     <Compile Include="StatusEffects\SE_Encumberance.cs" />
     <Compile Include="StatusEffects\SE_Exhausted.cs" />
     <Compile Include="StatusEffects\SE_Pushing.cs" />
+    <Compile Include="StatusEffects\SE_Warmed.cs" />
     <Compile Include="Utility\RebalanceConfig.cs" />
     <Compile Include="Utility\Utilities.cs" />
   </ItemGroup>

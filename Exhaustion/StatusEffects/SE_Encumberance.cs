@@ -5,10 +5,14 @@ namespace Exhaustion.StatusEffects
 {
     public class SE_Encumberance : StatusEffect
     {
-        public override void Setup(Character character)
+        public void Awake()
         {
             m_name = "Encumberance";
             name = "Encumberance";
+        }
+
+        public override void Setup(Character character)
+        {
             m_ttl = -1f;
 
             base.Setup(character);

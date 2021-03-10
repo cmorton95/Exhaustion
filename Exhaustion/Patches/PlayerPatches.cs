@@ -3,6 +3,8 @@ using Exhaustion.StatusEffects;
 using UnityEngine;
 using Config = Exhaustion.Utility.RebalanceConfig;
 using System;
+using ValheimLib.ODB;
+using ValheimLib;
 
 namespace Exhaustion.Patches
 {
@@ -16,6 +18,11 @@ namespace Exhaustion.Patches
         {
             static void Postfix(Player __instance)
             {
+                //Prevent NREs from main menu fake player
+                //TODO: Find a better solution, this function seems unreliable as it just returns "..." for any Player object *except* the main menu player
+                if (string.IsNullOrEmpty(__instance.GetPlayerName()))
+                    return;
+
                 __instance.m_staminaRegen = Config.StaminaRegen.Value;
                 __instance.m_staminaRegenDelay = Config.StaminaDelay.Value;
                 __instance.m_dodgeStaminaUsage = Config.DodgeStamina.Value;
@@ -24,10 +31,10 @@ namespace Exhaustion.Patches
                 __instance.m_encumberedStaminaDrain = Config.EncumberedDrain.Value;
                 __instance.m_acceleration = Config.Acceleration.Value;
 
-                if (!__instance.GetSEMan().HaveStatusEffect("Encumberance") && Config.EncumberanceAltEnable.Value)
+                var seman = __instance.GetSEMan();
+                if (!seman.HaveStatusEffect("Encumberance") && Config.EncumberanceAltEnable.Value)
                 {
-                    var encumberance = ScriptableObject.CreateInstance<SE_Encumberance>();
-                    __instance.GetSEMan().AddStatusEffect(encumberance);
+                    seman.AddStatusEffect("Encumberance");
                 }
             }
         }
@@ -38,7 +45,7 @@ namespace Exhaustion.Patches
         [HarmonyPatch(typeof(Player), "HaveStamina")]
         class PlayerHaveStaminaPatch
         {
-            static void Postfix(float amount, ref bool __result, Player __instance, ZNetView ___m_nview, float ___m_maxStamina)
+            static void Postfix(ref bool __result, Player __instance, ZNetView ___m_nview, float ___m_maxStamina)
             {
                 if (___m_nview.IsValid())
                 {
@@ -62,18 +69,31 @@ namespace Exhaustion.Patches
         [HarmonyPatch(typeof(Player), "CheckRun")]
         class PlayerCheckRunPatch
         {
-            static void Postfix(ref bool __result, Player __instance, bool ___m_run)
+            static void Postfix(float dt, ref bool __result, Player __instance, bool ___m_run)
             {
                 if (Config.ExhaustionEnable.Value)
                 {
+                    var seman = __instance.GetSEMan();
+
                     //We need to check ___m_run (Player.m_run) to see if the player is holding the run key
                     if (__instance.GetStamina() <= 0f && __instance.GetStamina() > Config.StaminaMinimum.Value && ___m_run)
                     {
-                        var seman = __instance.GetSEMan();
                         if (!seman.HaveStatusEffect("Pushing"))
                         {
-                            var pushing = ScriptableObject.CreateInstance<SE_Pushing>();
-                            seman.AddStatusEffect(pushing);
+                            seman.AddStatusEffect("Pushing");
+                        }
+
+                        if (Config.PushingWarms.Value && !seman.HaveStatusEffect("Freezing") && !seman.HaveStatusEffect("Frost"))
+                        {
+                            if (!seman.HaveStatusEffect("Warmed"))
+                            {
+                                seman.AddStatusEffect("Warmed");
+                            }
+                            else
+                            {
+                                var warm = seman.GetStatusEffect("Warmed") as SE_Warmed;
+                                warm.TTL += Config.PushingWarmTimeRate.Value * dt;
+                            }
                         }
                         __result = !seman.HaveStatusEffect("Exhausted");
                     }
@@ -82,10 +102,10 @@ namespace Exhaustion.Patches
                     if (__instance.GetStamina() <= Config.ExhaustionThreshold.Value)
                     {
                         __instance.m_acceleration = Config.STAM_EXH_ACCEL;
-                        if ((!__result || __instance.GetStamina() <= Config.StaminaMinimum.Value) && !__instance.GetSEMan().HaveStatusEffect("Exhausted"))
+                        if ((!__result || __instance.GetStamina() <= Config.StaminaMinimum.Value) && !seman.HaveStatusEffect("Exhausted"))
                         {
-                            var exhausted = ScriptableObject.CreateInstance<SE_Exhausted>();
-                            __instance.GetSEMan().AddStatusEffect(exhausted);
+                            seman.RemoveStatusEffect("Pushing");
+                            seman.AddStatusEffect("Exhausted");
                         }
                     }
                 }
@@ -180,9 +200,13 @@ namespace Exhaustion.Patches
         [HarmonyPatch(typeof(Player), "IsEncumbered")]
         class PlayerIsEncumberedPatch
         {
-            static void Postfix(ref bool __result, Player __instance)
+            static bool Prefix(ref bool __result, Player __instance)
             {
+                if (!Config.EncumberanceAltEnable.Value)
+                    return true;
+
                 __result = __instance.GetInventory().GetTotalWeight() > Config.EncumberanceAltThreshold.Value + (__instance.GetMaxCarryWeight() - Config.BaseCarryWeight.Value);
+                return false;
             }
         }
 
@@ -285,7 +309,7 @@ namespace Exhaustion.Patches
             {
                 if (string.Equals(name, "Cold") && Config.PushingWarms.Value)
                 {
-                    if (__instance.HaveStatusEffect("Pushing"))
+                    if (__instance.HaveStatusEffect("Warmed"))
                     {
                         __result = null;
                         return false;

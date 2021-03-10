@@ -1,30 +1,25 @@
-﻿using Config = Exhaustion.Utility.RebalanceConfig;
+﻿using UnityEngine;
+using ValheimLib;
+using Config = Exhaustion.Utility.RebalanceConfig;
 
 namespace Exhaustion.StatusEffects
 {
     public class SE_Exhausted : StatusEffect
     {
-        public override void Setup(Character character)
+        public void Awake()
         {
             m_name = "Exhausted";
             name = "Exhausted";
-            m_ttl = -1;
+            m_tooltip = $"You ran out of stamina and became exhausted. Reduces movement speed by <color=yellow>{(1-Config.ExhaustionSpeedMultiplier.Value) * 100}%</color> until you recover <color=yellow>{Config.ExhaustionRecoveryThreshold.Value * 100}%</color> of your maximum stamina.";
+        }
 
-            var vfxWet = ZNetScene.instance.GetPrefab("vfx_Wet");
+        public override void Setup(Character character)
+        {
+            m_ttl = -1;
 
             m_icon = Utility.Utilities.SweatSprite;
             m_startEffects = new EffectList();
-            m_startEffects.m_effectPrefabs = new EffectList.EffectData[] { new EffectList.EffectData()
-                {
-                    m_prefab = vfxWet,
-                    m_enabled = true,
-                    m_attach = true,
-                    m_inheritParentRotation = false,
-                    m_inheritParentScale = false,
-                    m_randomRotation = false,
-                    m_scale = true
-                }
-            };
+            m_startEffects.m_effectPrefabs = new EffectList.EffectData[] { Utility.Utilities.WetEffect };
 
             base.Setup(character);
         }

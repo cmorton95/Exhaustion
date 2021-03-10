@@ -37,6 +37,8 @@ namespace Exhaustion.Utility
         public static ConfigEntry<float> PushingSpeedMultiplier { get; private set; }
         public static ConfigEntry<bool> PushingWarms { get; private set; }
         public static ConfigEntry<float> PushingWarmRate { get; private set; }
+        public static ConfigEntry<float> PushingWarmTimeRate { get; private set; }
+        public static ConfigEntry<float> PushingWarmInitialTime { get; private set; }
         public static float STAM_EXH_ACCEL => 0.02f;
 
         //Encumberance
@@ -84,8 +86,10 @@ namespace Exhaustion.Utility
             ExhaustionRecoveryThreshold = config.Bind("Exhaustion", "ExhaustionRecoveryThreshold", 0.8f, "Stamina percentage (where 0.0 = 0%, 1.0 = 100%) threshold to deactivate exhaustion debuff");
             ExhaustionSpeedMultiplier = config.Bind("Exhaustion", "ExhaustionSpeedModifier", 0.25f, "Movement speed multiplier applied when exhausted (note this stacks with the pushing speed modifier)");
             PushingSpeedMultiplier = config.Bind("Exhaustion", "PushingSpeedModifier", 0.85f, "Movement speed multiplier applied when pushing (sprinting below 0 stamina)");
-            PushingWarms = config.Bind("Exhaustion", "PushingWarms", true, "Enable or disable the pushing debuff 'warming' the player (reduces time remaining on 'Wet' debuff and temporarily removes 'Cold' debuff)");
-            PushingWarmRate = config.Bind("Exhaustion", "PushingWarmRate", 4f, "The rate at which pushing warms the player");
+            PushingWarms = config.Bind("Exhaustion", "PushingWarms", true, "Enable or disable the pushing debuff 'warming' the player (applies 'warm' debuff; reduces time remaining on 'wet' debuff and temporarily removes 'cold' debuff)");
+            PushingWarmRate = config.Bind("Exhaustion", "PushingWarmRate", 4f, "The rate at which pushing warms the player, reducing time on the 'wet' debuff");
+            PushingWarmTimeRate = config.Bind("Exhaustion", "PushingWarmTimeRate", 5f, "The rate at which more time is generated for the 'warm' debuff");
+            PushingWarmInitialTime = config.Bind("Exhaustion", "PushingWarmInitialTime", 2f, "The initial amount of time the player gains the 'warm' debuff for");
 
             //Encumberance
             BaseCarryWeight = config.Bind("Encumberance", "BaseCarryWeight", 300f, "Base carry weight; vanilla: 300");
