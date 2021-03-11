@@ -15,6 +15,7 @@ The plugin comes pre-configured with settings that make gameplay more interestin
 
 ## Requirements
 * [BepInEx](https://valheim.thunderstore.io/package/denikson/BepInExPack_Valheim/)
+* [ValheimLib](https://valheim.thunderstore.io/package/ValheimModding/ValheimLib/)
 
 ## Installation
 Install like any other BepInEx plugin, drop the dll into the BepInEx folder in the Valheim game directory. Configuration is done through the 7dd.dev.exhaustion.cfg file under BepInEx/config.
