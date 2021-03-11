@@ -137,19 +137,12 @@ namespace Exhaustion.Patches
         [HarmonyPatch(typeof(Player), "RPC_UseStamina")]
         class PlayerRPCUseStaminaPatch
         {
-            static void Prefix(Player __instance, out float __state)
-            {
-                //Store current stamina in state before RPC_UseStamina is executed
-                __state = __instance.GetStamina();
-            }
 
-            static void Postfix(float v, Player __instance, ref float ___m_stamina, float __state)
+            static bool Prefix(float v, Player __instance, ref float ___m_stamina, ref float ___m_staminaRegenTimer)
             {
-                //If in negative stamina values and the original state - v (the amount of stamina used) is also negative, clamp stamina to the configured minimum value instead 
-                if (__instance.GetStamina() <= 0f && __state - v < 0f)
-                {
-                    ___m_stamina = Mathf.Clamp(__state - v, Config.StaminaMinimum.Value, __state);
-                }
+                ___m_stamina = Mathf.Clamp(___m_stamina - v, Config.StaminaMinimum.Value, __instance.GetMaxStamina());
+                ___m_staminaRegenTimer = __instance.m_staminaRegenDelay;
+                return false;
             }
         }
 
@@ -159,17 +152,14 @@ namespace Exhaustion.Patches
         [HarmonyPatch(typeof(Player), "SetMaxStamina")]
         class PlayerSetMaxStaminaPatch
         {
-            static void Prefix(float ___m_stamina, out float __state)
+            static bool Prefix(ref float ___m_stamina, ref float ___m_maxStamina, float stamina, bool flashBar)
             {
-                __state = ___m_stamina;
-            }
+                if (stamina > ___m_maxStamina)
+                    Hud.instance?.StaminaBarUppgradeFlash();
 
-            static void Postfix(ref float ___m_stamina, float __state)
-            {
-                if (__state < 0f && ___m_stamina == 0f)
-                {
-                    ___m_stamina = __state;
-                }
+                ___m_maxStamina = stamina;
+                ___m_stamina = Mathf.Clamp(___m_stamina, Config.StaminaMinimum.Value, ___m_maxStamina);
+                return false;
             }
         }
 
