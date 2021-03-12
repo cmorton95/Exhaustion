@@ -3,7 +3,7 @@ A highly configurable plugin for Valheim intending to make stamina management mo
 
 Vanilla combat can be very laborious. The intent of this mod is to reduce the need for kiting and slowly picking off enemies from groups. It does this by providing substantially more stamina regen in exchange for using more stamina and employing better ways of punishing stamina mis-management than simply waiting for a bar to refill.
 
-The plugin comes pre-configured with settings that make gameplay more interesting without harming the vanilla difficulty. If you find the balance isn't to your liking, the configuration allows almost everything to be customised to your needs.
+The plugin comes pre-configured with settings that make gameplay more interesting without harming the vanilla difficulty. If you find the balance isn't to your liking, the configuration allows almost everything to be customised, enabled or disabled to fit your needs.
 
 ## Main Features
 **Exhaustion stamina system overhaul** which applies debuffs and effects to punish stamina mis-management in more interesting ways
