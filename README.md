@@ -1,17 +1,28 @@
 # Exhaustion
 A highly configurable plugin for Valheim intending to make stamina management more engaging, among various other changes to make gameplay more interesting. 
 
-The plugin comes pre-configured with settings that make gameplay more interesting without harming the vanilla difficulty. 
+The plugin comes pre-configured with settings that make gameplay more interesting without harming the vanilla difficulty. If you find the balance isn't to your liking, the configuration allows almost everything to be customised to your needs.
 
-## Features
-* Modify base values such as Health, Stamina (inc. Regen/Delay, and Jump and Dodge costs), and Carry weight
-* Configuration of food health, stamina and burn times
-* Allow for negative stamina values similarly to Dark Souls games to make running out of stamina more punishing thereby incurring longer regen delays
-* Allow sprinting into negative stamina values (called "Pushing") with the risk of becoming Exhausted(tm) if done for too long
-* Option to 'Warm' the player when Pushing, reducing wetness and temporarily removing coldness
-* Alternative Encumberance system allowing you to exceed carry weight at the cost of movement speed up to a configurable threshold
+## Main Features
+* Exhaustion stamina system overhaul which applies debuffs and effects to punish stamina mis-management in more interesting ways than simply requiring you to kite enemies while your stamina regenerates
+  * Allow for negative stamina values which incur negative (and/or possitive) status effects at configurable thresholds, becoming "Exhausted" at the final threshold
+  * Allow sprinting with negative stamina (called "Pushing") to reach these thresholds - note that *only* sprinting is available with negative stamina
+  * Apply additional stamina usage to attacks based on the weapon's weight
+* Modify base player attributes, including
+  * Health, stamina and carry weight
+  * Stamina regeneration and delay
+  * Jump, dodge and encumbrance stamina usage
+* Alternative Encumbrance system to make carry weight less binary
+  * Make movement speed scale with carry weight
+  * Move "Encumbered" debuff threshold
+
+## Additional Features
+* Food value multipliers, modify health, stamina and time taken to burn
+* Apply "Warmed Up" debuff when Pushing, temporarily removing cold and reducing the duration of the Wet debuff
 * Customisation of Parry timing to allow for more or less time to parry (parry time is halved by default)
-* Parry stamina refunds, movement speed and acceleration modifications, no stamina requirement for building, multipliers galore and more!
+* Refund a portion of your stamina on a successful parry
+* Movement speed and acceleration modifications
+* No stamina requirement for building 
 
 ## Requirements
 * [BepInEx](https://valheim.thunderstore.io/package/denikson/BepInExPack_Valheim/)
@@ -25,5 +36,7 @@ Completely untested in multiplayer. If every client (and presumably the server) 
 
 Please report any issues on Github.
 
-## Source
+## Sources
 [Github](https://github.com/cmorton95/Exhaustion)
+[Thunderstore](https://valheim.thunderstore.io/package/etaks/Exhaustion/)
+[Nexus Mods](https://www.nexusmods.com/valheim/mods/297)
