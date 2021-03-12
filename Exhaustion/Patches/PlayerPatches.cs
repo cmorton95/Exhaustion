@@ -5,11 +5,55 @@ using Config = Exhaustion.Utility.RebalanceConfig;
 using System;
 using ValheimLib.ODB;
 using ValheimLib;
+using Exhaustion.Managers;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Exhaustion.Patches
 {
     public static class PlayerPatches
     {
+        public static Func<float, bool> OnHaveStamina { get; set; }
+        public static Func<float, float> BeforeUseStamina { get; set; }
+        public static Action OnUseStamina { get; set; }
+        public static Action<float> OnRPCUseStamina { get; set; }
+        public static Action<float, bool> OnSetMaxStamina { get; set; }
+        public static Action<float> OnUpdateStats { get; set; }
+        public static Func<bool> OnIsEncumbered { get; set; }
+        public static Action BeforeBlockAttack { get; set; }
+        public static Action<bool> OnBlockAttack { get; set; }
+        public static Func<float> OnGetBaseFoodHP { get; set; }
+        public static Action<Player> BeforeDestroy { get; set; }
+
+        public static void Unassign(PlayerShim shim)
+        {
+            OnHaveStamina -= shim.CheckStamina;
+            BeforeUseStamina -= shim.GetNewStaminaUsage;
+            OnSetMaxStamina -= shim.UpdateMaxStamina;
+            OnRPCUseStamina -= shim.UpdateStamina;
+            BeforeDestroy -= shim.Destroy;
+
+            if (Config.ParryRefundEnable.Value)
+            {
+                BeforeBlockAttack -= shim.UpdateParry;
+                OnBlockAttack -= shim.UpdateParryRefund;
+            }
+            if (Config.ExhaustionEnable.Value)
+            {
+                OnUseStamina -= shim.CheckAndAddExhaustion;
+                OnUpdateStats -= shim.CheckAndRemoveExhaustion;
+            }
+            if (Config.EncumberanceAltEnable.Value)
+            {
+                OnIsEncumbered -= shim.CheckEncumbered;
+            }
+            if (Config.BaseHealthStaminaEnable.Value)
+            {
+                OnGetBaseFoodHP -= shim.GetBaseHp;
+            }
+
+        }
+
         /// <summary>
         ///     Patch Awake to inject our configured values and apply the Encumberance status effect if enabled
         /// </summary>
@@ -23,16 +67,37 @@ namespace Exhaustion.Patches
                 if (string.IsNullOrEmpty(__instance.GetPlayerName()))
                     return;
 
-                __instance.m_staminaRegen = Config.StaminaRegen.Value;
-                __instance.m_staminaRegenDelay = Config.StaminaDelay.Value;
-                __instance.m_dodgeStaminaUsage = Config.DodgeStamina.Value;
-                __instance.m_maxCarryWeight = Config.BaseCarryWeight.Value;
-                __instance.m_jumpStaminaUsage = Config.JumpStamina.Value;
-                __instance.m_encumberedStaminaDrain = Config.EncumberedDrain.Value;
-                __instance.m_acceleration = Config.Acceleration.Value;
+                if (!__instance.IsOwner())
+                    return;
+                
+                var shim = new PlayerShim(__instance);
+                OnHaveStamina += shim.CheckStamina;
+                BeforeUseStamina += shim.GetNewStaminaUsage;
+                OnSetMaxStamina += shim.UpdateMaxStamina;
+                OnRPCUseStamina += shim.UpdateStamina;
+                BeforeDestroy += shim.Destroy;
+
+                if (Config.ParryRefundEnable.Value)
+                {
+                    BeforeBlockAttack += shim.UpdateParry;
+                    OnBlockAttack += shim.UpdateParryRefund;
+                }
+                if (Config.ExhaustionEnable.Value)
+                {
+                    OnUseStamina += shim.CheckAndAddExhaustion;
+                    OnUpdateStats += shim.CheckAndRemoveExhaustion;
+                }
+                if (Config.EncumberanceAltEnable.Value)
+                {
+                    OnIsEncumbered += shim.CheckEncumbered;
+                }
+                if (Config.BaseHealthStaminaEnable.Value)
+                {
+                    OnGetBaseFoodHP += shim.GetBaseHp;
+                }
 
                 var seman = __instance.GetSEMan();
-                if (!seman.HaveStatusEffect("Encumberance") && Config.EncumberanceAltEnable.Value)
+                if (Config.EncumberanceAltEnable.Value && !seman.HaveStatusEffect("Encumberance"))
                 {
                     seman.AddStatusEffect("Encumberance");
                 }
@@ -45,70 +110,13 @@ namespace Exhaustion.Patches
         [HarmonyPatch(typeof(Player), "HaveStamina")]
         class PlayerHaveStaminaPatch
         {
-            static void Postfix(ref bool __result, Player __instance, ZNetView ___m_nview, float ___m_maxStamina)
+            static bool Prefix(ref bool __result, float amount)
             {
-                if (___m_nview.IsValid())
-                {
-                    if (___m_nview.IsOwner())
-                    {
-                        if (Config.ExhaustionEnable.Value && __instance.GetSEMan().HaveStatusEffect("Exhausted"))
-                            __result = false;
-                        __result = __instance.GetStamina() > 0.0f;
-                    }
-                    else if (!___m_nview.IsOwner())
-                    {
-                        __result = ___m_nview.GetZDO().GetFloat("stamina", ___m_maxStamina) > 0.0f;
-                    }
-                }
-            }
-        }
+                if (OnHaveStamina == null)
+                    return true;
 
-        /// <summary>
-        ///     Patch CheckRun to allow the player to continue sprinting into negative stamina values and to apply the "Pushing" and "Exhausted" status effects when thresholds are met
-        /// </summary>
-        [HarmonyPatch(typeof(Player), "CheckRun")]
-        class PlayerCheckRunPatch
-        {
-            static void Postfix(float dt, ref bool __result, Player __instance, bool ___m_run)
-            {
-                if (Config.ExhaustionEnable.Value)
-                {
-                    var seman = __instance.GetSEMan();
-
-                    //We need to check ___m_run (Player.m_run) to see if the player is holding the run key
-                    if (__instance.GetStamina() <= 0f && __instance.GetStamina() > Config.StaminaMinimum.Value && ___m_run)
-                    {
-                        if (!seman.HaveStatusEffect("Pushing"))
-                        {
-                            seman.AddStatusEffect("Pushing");
-                        }
-
-                        if (Config.PushingWarms.Value && !seman.HaveStatusEffect("Freezing") && !seman.HaveStatusEffect("Frost"))
-                        {
-                            if (!seman.HaveStatusEffect("Warmed"))
-                            {
-                                seman.AddStatusEffect("Warmed");
-                            }
-                            else
-                            {
-                                var warm = seman.GetStatusEffect("Warmed") as SE_Warmed;
-                                warm.TTL += Config.PushingWarmTimeRate.Value * dt;
-                            }
-                        }
-                        __result = !seman.HaveStatusEffect("Exhausted");
-                    }
-
-                    //If stamina falls below the exhaustion threshold apply acceleration debuff and "Exhausted" status effect
-                    if (__instance.GetStamina() <= Config.ExhaustionThreshold.Value)
-                    {
-                        __instance.m_acceleration = Config.STAM_EXH_ACCEL;
-                        if ((!__result || __instance.GetStamina() <= Config.StaminaMinimum.Value) && !seman.HaveStatusEffect("Exhausted"))
-                        {
-                            seman.RemoveStatusEffect("Pushing");
-                            seman.AddStatusEffect("Exhausted");
-                        }
-                    }
-                }
+                __result = OnHaveStamina.Invoke(amount);
+                return false;
             }
         }
 
@@ -118,16 +126,14 @@ namespace Exhaustion.Patches
         [HarmonyPatch(typeof(Player), "UseStamina")]
         class PlayerUseStaminaPatch
         {
-            static void Prefix(ref float v, Player __instance)
+            static void Prefix(ref float v)
             {
-                var placeMode = __instance.InPlaceMode();
+                v = BeforeUseStamina?.Invoke(v) ?? v;
+            }
 
-                if (placeMode && v == 5.0f && !Config.BuildUseStamina.Value)
-                {
-                    v = 0.0f;
-                }
-
-                v *= Config.StaminaUseMultiplier.Value;
+            static void Postfix()
+            {
+                OnUseStamina?.Invoke();
             }
         }
 
@@ -138,10 +144,12 @@ namespace Exhaustion.Patches
         class PlayerRPCUseStaminaPatch
         {
 
-            static bool Prefix(float v, Player __instance, ref float ___m_stamina, ref float ___m_staminaRegenTimer)
+            static bool Prefix(float v)
             {
-                ___m_stamina = Mathf.Clamp(___m_stamina - v, Config.StaminaMinimum.Value, __instance.GetMaxStamina());
-                ___m_staminaRegenTimer = __instance.m_staminaRegenDelay;
+                if (OnRPCUseStamina == null)
+                    return true;
+
+                OnRPCUseStamina?.Invoke(v);
                 return false;
             }
         }
@@ -152,13 +160,12 @@ namespace Exhaustion.Patches
         [HarmonyPatch(typeof(Player), "SetMaxStamina")]
         class PlayerSetMaxStaminaPatch
         {
-            static bool Prefix(ref float ___m_stamina, ref float ___m_maxStamina, float stamina, bool flashBar)
+            static bool Prefix(float stamina, bool flashBar)
             {
-                if (stamina > ___m_maxStamina)
-                    Hud.instance?.StaminaBarUppgradeFlash();
+                if (OnSetMaxStamina == null)
+                    return true;
 
-                ___m_maxStamina = stamina;
-                ___m_stamina = Mathf.Clamp(___m_stamina, Config.StaminaMinimum.Value, ___m_maxStamina);
+                OnSetMaxStamina?.Invoke(stamina, flashBar);
                 return false;
             }
         }
@@ -169,18 +176,9 @@ namespace Exhaustion.Patches
         [HarmonyPatch(typeof(Player), "UpdateStats")]
         class PlayerUpdateStatsPatch
         {
-            static void Postfix(Player __instance)
+            static void Postfix(float dt)
             {
-                var seman = __instance.GetSEMan();
-                if (__instance.GetStaminaPercentage() >= 0f && seman.HaveStatusEffect("Pushing"))
-                {
-                    seman.RemoveStatusEffect("Pushing");
-                }
-                if (__instance.GetStaminaPercentage() >= Config.ExhaustionRecoveryThreshold.Value && seman.HaveStatusEffect("Exhausted"))
-                {
-                    seman.RemoveStatusEffect("Exhausted");
-                    __instance.m_acceleration = Config.Acceleration.Value;
-                }
+                OnUpdateStats?.Invoke(dt);
             }
         }
 
@@ -190,34 +188,13 @@ namespace Exhaustion.Patches
         [HarmonyPatch(typeof(Player), "IsEncumbered")]
         class PlayerIsEncumberedPatch
         {
-            static bool Prefix(ref bool __result, Player __instance)
+            static bool Prefix(ref bool __result)
             {
-                if (!Config.EncumberanceAltEnable.Value)
+                if (OnIsEncumbered == null)
                     return true;
 
-                __result = __instance.GetInventory().GetTotalWeight() > Config.EncumberanceAltThreshold.Value + (__instance.GetMaxCarryWeight() - Config.BaseCarryWeight.Value);
+                __result = OnIsEncumbered.Invoke();
                 return false;
-            }
-        }
-
-        /// <summary>
-        ///     Patch GetTotalFoodValue base HP and stamina, unfortunately requires reimplementation of method as hp and stamina values were inlined
-        /// </summary>
-        [HarmonyPatch(typeof(Player), "GetTotalFoodValue")]
-        class PlayerTotalFoodValuePatch
-        {
-            static void Postfix(ref float hp, ref float stamina, Player __instance)
-            {
-                hp = Config.BaseHealth.Value;
-                stamina = Config.BaseStamina.Value;
-
-                var foods = __instance.GetFoods();
-
-                foreach (Player.Food food in foods)
-                {
-                    hp += food.m_health;
-                    stamina += food.m_stamina;
-                }
             }
         }
 
@@ -227,9 +204,70 @@ namespace Exhaustion.Patches
         [HarmonyPatch(typeof(Player), "GetBaseFoodHP")]
         class PlayerBaseFoodHPPatch
         {
-            static void Postfix(ref float __result)
+            static bool Prefix(ref float __result)
             {
-                __result = Config.BaseHealth.Value;
+                if (OnGetBaseFoodHP == null)
+                    return true;
+
+                __result = OnGetBaseFoodHP.Invoke();
+                return false;
+            }
+        }
+
+        /// <summary>
+        ///     Use transpiler to patch inlined base health and stamina values
+        /// </summary>
+        [HarmonyPatch(typeof(Player), "GetTotalFoodValue")]
+        public static class PlayerTotalFoodValuePatch
+        {
+            [HarmonyTranspiler]
+            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                //We can't manually patch this method for some reason, so we have to check here instead
+                if (!Config.BaseHealthStaminaEnable.Value)
+                    return instructions;
+
+                var ops = new List<CodeInstruction>(instructions);
+                bool foodPatched = false;
+                bool stamPatched = false;
+                for (int i = 0; i + 1 < ops.Count; i++)
+                {
+                    if (foodPatched && stamPatched)
+                        break;
+
+                    var op = ops[i];
+                    if (!foodPatched && op.IsLdarg(1))
+                    {
+                        if (ops[i + 1].opcode == System.Reflection.Emit.OpCodes.Ldc_R4)
+                        {
+                            Debug.Log($"Patching health ({ops[i].opcode}) to {Config.BaseHealth.Value}");
+                            ops[i + 1].operand = Config.BaseHealth.Value;
+                            foodPatched = true;
+                            continue;
+                        }
+                    }
+                    if (!stamPatched && op.IsLdarg(2))
+                    {
+                        if (ops[i + 1].opcode == System.Reflection.Emit.OpCodes.Ldc_R4)
+                        {
+                            Debug.Log($"Patching stamina ({ops[i].opcode}) to {Config.BaseStamina.Value}");
+                            ops[i + 1].operand = Config.BaseStamina.Value;
+                            stamPatched = true;
+                            continue;
+                        }
+
+                    }
+                }
+                return instructions;
+            }
+        }
+
+        [HarmonyPatch(typeof(Player), "OnDestroy")]
+        class PlayerOnDestroyPatch
+        {
+            static void Prefix(Player __instance)
+            {
+                BeforeDestroy?.Invoke(__instance);
             }
         }
 
@@ -241,32 +279,14 @@ namespace Exhaustion.Patches
         [HarmonyPatch(typeof(Humanoid), "BlockAttack")]
         class HumanoidBlockAttackPatch
         {
-            static void Prefix(Player __instance, out float __state)
+            static void Prefix()
             {
-                var traverse = Traverse.Create(__instance);
-                var blockTimer = traverse.Field("m_blockTimer");
-                var timerVal = (float)blockTimer.GetValue();
-                __state = 0f;
-
-                var currentBlocker = (ItemDrop.ItemData)traverse.Method("GetCurrentBlocker").GetValue();
-
-                //Use configured parry time
-                if (timerVal > Config.ParryTime.Value && timerVal != -1.0f)
-                {
-                    blockTimer.SetValue(0.26f); //skip parry timing @0.25
-                }
-                else if (timerVal <= Config.ParryTime.Value && currentBlocker.m_shared.m_timedBlockBonus > 1.0f)
-                {
-                    blockTimer.SetValue(0.01f);
-                    __state = currentBlocker.m_shared.m_timedBlockBonus * __instance.m_blockStaminaDrain * Config.ParryRefundMultiplier.Value;
-                }
+                BeforeBlockAttack?.Invoke();
             }
 
             static void Postfix(bool __result, Player __instance, float __state)
             {
-                //Refund stamina if enabled using stored value in state
-                if (__result && __state > 0.0f && Config.ParryRefundEnable.Value)
-                    __instance.AddStamina(__state);
+                OnBlockAttack?.Invoke(__result);
             }
         }
 

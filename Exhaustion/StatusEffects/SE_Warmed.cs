@@ -29,16 +29,12 @@ namespace Exhaustion.StatusEffects
         public override void UpdateStatusEffect(float dt)
         {
             base.UpdateStatusEffect(dt);
-            var seman = m_character.GetSEMan();
-            var wet = seman.GetStatusEffect("Wet");
+
+            var wet = m_character.GetSEMan().GetStatusEffect("Wet");
             if (wet != null)
             {
                 var time = Traverse.Create(wet).Field("m_time");
                 time.SetValue((float)time.GetValue() + (Config.PushingWarmRate.Value * dt));
-            }
-            if (seman.HaveStatusEffect("Cold"))
-            {
-                seman.RemoveStatusEffect("Cold");
             }
         }
     }
