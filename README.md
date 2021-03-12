@@ -13,7 +13,7 @@ The plugin comes pre-configured with settings that make gameplay more interestin
 * Apply additional stamina usage to attacks based on the weapon's weight
 
 **Alternative Encumbrance system** to make carry weight less binary
-* Make movement speed scales with carry weight
+* Make movement speed scale with carry weight, scaling harder when exceeding base carry weight
 * Move the "Encumbered" debuff carry weight threshold
 
 **Modify base player attributes**, including    
@@ -22,8 +22,8 @@ The plugin comes pre-configured with settings that make gameplay more interestin
 * Jump, dodge and encumbrance stamina usage
 
 ## Additional Features
-* Food value multipliers, modify health, stamina and time taken to burn
-* Customisation of Parry timing to allow for more or less time to parry (parry time is halved by default)
+* **Food value multipliers**, modify health, stamina and time taken to burn
+* **Customisation of Parry timing** to allow for more or less time to parry (parry time is halved by default)
 * Refund a portion of your stamina on a successful parry
 * Movement speed and acceleration modifications
 * No stamina requirement for building 
