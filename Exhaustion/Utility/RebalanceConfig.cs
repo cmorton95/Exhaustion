@@ -96,11 +96,11 @@ namespace Exhaustion.Utility
             PushingWarmInitialTime = config.Bind("Exhaustion", "PushingWarmInitialTime", 2f, new ConfigDescription("The initial amount of time the player gains the 'warm' debuff for", new AcceptableValueRange<float>(1f, 30f)));
 
             //Encumberance
-            BaseCarryWeight = config.Bind("Encumberance", "BaseCarryWeight", 300f, new ConfigDescription("Base carry weight; vanilla: 300", new AcceptableValueRange<float>(0f, 1000f)));
+            BaseCarryWeight = config.Bind("Encumberance", "BaseCarryWeight", 200f, new ConfigDescription("Base carry weight; vanilla: 300", new AcceptableValueRange<float>(0f, 1000f)));
             EncumberanceAltEnable = config.Bind("Encumberance", "EncumberanceAltEnable", true, new ConfigDescription("Enable or disable alternative encumberance, scales movement speed on carry weight"));
             EncumberanceAltMinSpeed = config.Bind("Encumberance", "EncumberanceAltMinSpeed", 0.6f, new ConfigDescription("The minimum speed multiplier applied when reaching the alt encumberance threshold", new AcceptableValueRange<float>(0.6f, 1f)));
             EncumberanceAltMaxSpeed = config.Bind("Encumberance", "EncumberanceAltMaxSpeed", 1.1f, new ConfigDescription("The maximum speed multiplier applied when unencumbered", new AcceptableValueRange<float>(0.6f, 2f)));
-            EncumberanceAltThreshold = config.Bind("Encumberance", "EncumberanceAltThreshold", 600f, new ConfigDescription("The carry weight threshold at which to apply the encumbered status", new AcceptableValueRange<float>(0f, 1000f)));
+            EncumberanceAltThreshold = config.Bind("Encumberance", "EncumberanceAltThreshold", 400f, new ConfigDescription("The carry weight threshold at which to apply the encumbered status", new AcceptableValueRange<float>(0f, 1000f)));
             EncumberedDrain = config.Bind("Encumberance", "EncumberanceDrain", 2f, new ConfigDescription("Base stamina drain when encumbered, applies regardless of alternative encumberance; vanilla: 10", new AcceptableValueRange<float>(0f, 20f)));
 
             //NexusID
