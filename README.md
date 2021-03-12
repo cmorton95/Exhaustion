@@ -1,28 +1,37 @@
 # Exhaustion
 A highly configurable plugin for Valheim intending to make stamina management more engaging, among various other changes to make gameplay more interesting. 
 
+Vanilla combat can be very laborious. The intent of this mod is to reduce the need for kiting and slowly picking off enemies from groups by providing substantially more stamina regen in exchange for using more stamina and employing better ways of punishing stamina mis-management than simply waiting.
+
 The plugin comes pre-configured with settings that make gameplay more interesting without harming the vanilla difficulty. If you find the balance isn't to your liking, the configuration allows almost everything to be customised to your needs.
 
 ## Main Features
-* Exhaustion stamina system overhaul which applies debuffs and effects to punish stamina mis-management in more interesting ways than simply requiring you to kite enemies while your stamina regenerates
-  * Allow for negative stamina values which incur negative (and/or possitive) status effects at configurable thresholds, becoming "Exhausted" at the final threshold
-  * Allow sprinting with negative stamina (called "Pushing") to reach these thresholds - note that *only* sprinting is available with negative stamina
-  * Apply additional stamina usage to attacks based on the weapon's weight
-* Modify base player attributes, including
-  * Health, stamina and carry weight
-  * Stamina regeneration and delay
-  * Jump, dodge and encumbrance stamina usage
-* Alternative Encumbrance system to make carry weight less binary
-  * Make movement speed scale with carry weight
-  * Move "Encumbered" debuff threshold
+**Exhaustion stamina system overhaul** which applies debuffs and effects to punish stamina mis-management in more interesting ways
+* Allow for negative stamina values which incur negative (and/or positive) effects at certain thresholds, becoming "Exhausted" at the final threshold
+* Allow sprinting with negative stamina (called "Pushing") to reach these thresholds - note that *only* sprinting is available with negative stamina
+* Apply "Warmed Up" debuff when Pushing, temporarily removing Cold and reducing the duration of the Wet debuff
+* Apply additional stamina usage to attacks based on the weapon's weight
+
+**Alternative Encumbrance system** to make carry weight less binary
+* Make movement speed scales with carry weight
+* Move the "Encumbered" debuff carry weight threshold
+
+**Modify base player attributes**, including    
+* Health, stamina and carry weight
+* Stamina regeneration and delay
+* Jump, dodge and encumbrance stamina usage
 
 ## Additional Features
 * Food value multipliers, modify health, stamina and time taken to burn
-* Apply "Warmed Up" debuff when Pushing, temporarily removing cold and reducing the duration of the Wet debuff
 * Customisation of Parry timing to allow for more or less time to parry (parry time is halved by default)
 * Refund a portion of your stamina on a successful parry
 * Movement speed and acceleration modifications
 * No stamina requirement for building 
+
+## Debuffs
+* **Exhausted** - Slows movement drastically and prevents sprinting, applied by reaching large negative stamina values
+* **Pushing** - Slows movement slightly and applies "Warmed Up", applied by reaching negative stamina values
+* **Warmed Up** - Prevents cold debuff (not freezing or frost) and reduces time on wet debuff
 
 ## Requirements
 * [BepInEx](https://valheim.thunderstore.io/package/denikson/BepInExPack_Valheim/)
