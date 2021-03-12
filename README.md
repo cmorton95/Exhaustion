@@ -6,17 +6,17 @@ Vanilla combat can be very laborious. The intent of this mod is to reduce the ne
 The plugin comes pre-configured with settings that make gameplay more interesting without harming the vanilla difficulty. If you find the balance isn't to your liking, the configuration allows almost everything to be customised, enabled or disabled to fit your needs.
 
 ## Main Features
-**Exhaustion stamina system overhaul** which applies debuffs and effects to punish stamina mis-management in more interesting ways
+#### Exhaustion stamina system overhaul which applies debuffs and effects to punish stamina mis-management in more interesting ways
 * Allow for negative stamina values which incur negative (and/or positive) effects at certain thresholds, becoming "Exhausted" at the final threshold
 * Allow sprinting with negative stamina (called "Pushing") to reach these thresholds - note that *only* sprinting is available with negative stamina
 * Apply "Warmed Up" debuff when Pushing, temporarily removing Cold and reducing the duration of the Wet debuff
 * Apply additional stamina usage to attacks based on the weapon's weight
 
-**Alternative Encumbrance system** to make carry weight less binary
+#### Alternative Encumbrance system to make carry weight less binary
 * Make movement speed scale with carry weight, scaling harder when exceeding base carry weight
 * Move the "Encumbered" debuff carry weight threshold
 
-**Modify base player attributes**, including    
+#### Modify base player attributes, including    
 * Health, stamina and carry weight
 * Stamina regeneration and delay
 * Jump, dodge and encumbrance stamina usage
