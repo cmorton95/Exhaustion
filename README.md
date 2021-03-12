@@ -47,5 +47,7 @@ Please report any issues on Github.
 
 ## Sources
 [Github](https://github.com/cmorton95/Exhaustion)
+
 [Thunderstore](https://valheim.thunderstore.io/package/etaks/Exhaustion/)
+
 [Nexus Mods](https://www.nexusmods.com/valheim/mods/297)
