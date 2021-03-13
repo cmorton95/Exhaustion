@@ -41,7 +41,7 @@ namespace Exhaustion.Utility
         public static ConfigEntry<float> PushingWarmRate { get; private set; }
         public static ConfigEntry<float> PushingWarmTimeRate { get; private set; }
         public static ConfigEntry<float> PushingWarmInitialTime { get; private set; }
-        public static float ExhaustionStaminaAcceleration => 0.02f;
+        public static float ExhaustedAcceleration => 0.02f;
 
         //Encumberance
         public static ConfigEntry<float> BaseCarryWeight { get; private set; }

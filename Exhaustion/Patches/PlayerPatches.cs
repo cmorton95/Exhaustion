@@ -1,13 +1,9 @@
-﻿using HarmonyLib;
-using Exhaustion.StatusEffects;
+﻿using Exhaustion.Managers;
+using HarmonyLib;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Config = Exhaustion.Utility.RebalanceConfig;
-using System;
-using ValheimLib.ODB;
-using ValheimLib;
-using Exhaustion.Managers;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace Exhaustion.Patches
 {
@@ -15,9 +11,7 @@ namespace Exhaustion.Patches
     {
         public static Func<float, bool> OnHaveStamina { get; set; }
         public static Func<float, float> BeforeUseStamina { get; set; }
-        public static Action OnUseStamina { get; set; }
-        public static Action<float> OnRPCUseStamina { get; set; }
-        public static Action<float, bool> OnSetMaxStamina { get; set; }
+        public static Action<float> OnUseStamina { get; set; }
         public static Action<float> OnUpdateStats { get; set; }
         public static Func<bool> OnIsEncumbered { get; set; }
         public static Action BeforeBlockAttack { get; set; }
@@ -29,8 +23,6 @@ namespace Exhaustion.Patches
         {
             OnHaveStamina -= shim.CheckStamina;
             BeforeUseStamina -= shim.GetNewStaminaUsage;
-            OnSetMaxStamina -= shim.UpdateMaxStamina;
-            OnRPCUseStamina -= shim.UpdateStamina;
             BeforeDestroy -= shim.Destroy;
 
             if (Config.ParryRefundEnable.Value)
@@ -73,8 +65,6 @@ namespace Exhaustion.Patches
                 var shim = new PlayerShim(__instance);
                 OnHaveStamina += shim.CheckStamina;
                 BeforeUseStamina += shim.GetNewStaminaUsage;
-                OnSetMaxStamina += shim.UpdateMaxStamina;
-                OnRPCUseStamina += shim.UpdateStamina;
                 BeforeDestroy += shim.Destroy;
 
                 if (Config.ParryRefundEnable.Value)
@@ -131,42 +121,9 @@ namespace Exhaustion.Patches
                 v = BeforeUseStamina?.Invoke(v) ?? v;
             }
 
-            static void Postfix()
+            static void Postfix(float v)
             {
-                OnUseStamina?.Invoke();
-            }
-        }
-
-        /// <summary>
-        ///     Patch RPC_UseStamina to prevent it from clamping stamina to positive values
-        /// </summary>
-        [HarmonyPatch(typeof(Player), "RPC_UseStamina")]
-        class PlayerRPCUseStaminaPatch
-        {
-
-            static bool Prefix(float v)
-            {
-                if (OnRPCUseStamina == null)
-                    return true;
-
-                OnRPCUseStamina?.Invoke(v);
-                return false;
-            }
-        }
-
-        /// <summary>
-        ///     Patch SetMaxStamina to prevent it from resetting stamina to positive values similarly to RPC_UseStamina
-        /// </summary>
-        [HarmonyPatch(typeof(Player), "SetMaxStamina")]
-        class PlayerSetMaxStaminaPatch
-        {
-            static bool Prefix(float stamina, bool flashBar)
-            {
-                if (OnSetMaxStamina == null)
-                    return true;
-
-                OnSetMaxStamina?.Invoke(stamina, flashBar);
-                return false;
+                OnUseStamina?.Invoke(v);
             }
         }
 

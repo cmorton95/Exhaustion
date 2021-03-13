@@ -1,10 +1,5 @@
 ﻿using Exhaustion.StatusEffects;
 using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using Config = Exhaustion.Utility.RebalanceConfig;
 
@@ -20,6 +15,7 @@ namespace Exhaustion.Managers
         private Traverse _stamina;
         private Traverse _maxStamina;
         private Traverse _runKey;
+        private Traverse _wallRunning;
         private Traverse _nview;
         private Traverse _regenTimer;
         private Traverse _blockTimer;
@@ -49,6 +45,12 @@ namespace Exhaustion.Managers
             set => _runKey.SetValue(value);
         }
 
+        private bool WallRunning
+        {
+            get => (bool)_wallRunning.GetValue();
+            set => _wallRunning.SetValue(value);
+        }
+
         private float ParryTimer
         {
             get => (float)_blockTimer.GetValue();
@@ -72,6 +74,12 @@ namespace Exhaustion.Managers
             set => Player.m_acceleration = value;
         }
 
+        private float StaminaRegen
+        {
+            get => Player.m_staminaRegen;
+            set => Player.m_staminaRegen = value;
+        }
+
         private float StaminaRegenDelay
         {
             get => Player.m_staminaRegenDelay;
@@ -82,10 +90,12 @@ namespace Exhaustion.Managers
         #region Properties
         private float ParryRefundAmount { get; set; }
         private SE_Warmed WarmedStatusEffect { get; set; }
+        private float ExhaustionBuildup { get; set; }
         #endregion
 
         #region Shortcut getter properties
-        private float StaminaPercentage => Player.GetStaminaPercentage();
+        private float StaminaExhaustionAdjusted => Stamina + ExhaustionBuildup;
+        private float StaminaExhaustionAdjustedPercentage => (Stamina + ExhaustionBuildup) / MaxStamina;
         private bool IsPushing => SEMan.HaveStatusEffect("Pushing");
         private bool IsExhausted => SEMan.HaveStatusEffect("Exhausted");
         private bool IsWarmedUp => SEMan.HaveStatusEffect("Warmed");
@@ -102,6 +112,7 @@ namespace Exhaustion.Managers
             _stamina = traverse.Field("m_stamina");
             _maxStamina = traverse.Field("m_maxStamina");
             _runKey = traverse.Field("m_run");
+            _wallRunning = traverse.Field("m_wallRunning");
             _nview = traverse.Field("m_nview");
             _regenTimer = traverse.Field("m_staminaRegenTimer");
             _blockTimer = traverse.Field("m_blockTimer");
@@ -114,19 +125,17 @@ namespace Exhaustion.Managers
 
         public bool CheckStamina(float amount)
         {
-            if (NView.IsValid() && !NView.IsOwner())
-            {
-                return NView.GetZDO().GetFloat("stamina", MaxStamina) > (RunKey && amount == 0.0f ? Config.StaminaMinimum.Value : 0.0f);
-            }
-            else
-            {
-                return Stamina > (RunKey && amount == 0.0f ? Config.StaminaMinimum.Value : 0.0f);
-            }
+            return StaminaExhaustionAdjusted > (RunKey && amount == 0.0f ? Config.StaminaMinimum.Value : 0.0f);
         }
 
-        public void CheckAndAddExhaustion()
+        public void CheckAndAddExhaustion(float amount)
         {
-            if (Stamina <= Config.PushingThreshold.Value && Stamina > Config.StaminaMinimum.Value && (RunKey || StaminaPercentage > Config.PushingThreshold.Value))
+            if (Stamina == 0f)
+            {
+                ExhaustionBuildup = Mathf.Clamp(ExhaustionBuildup - amount, Config.StaminaMinimum.Value, 0f);
+            }
+
+            if (StaminaExhaustionAdjusted <= Config.PushingThreshold.Value && StaminaExhaustionAdjusted > Config.StaminaMinimum.Value && (RunKey || StaminaExhaustionAdjustedPercentage > Config.PushingThreshold.Value))
             {
                 AddPushing();
                 if (Config.PushingWarms.Value)
@@ -134,26 +143,29 @@ namespace Exhaustion.Managers
             }
 
             //If stamina falls below the exhaustion threshold apply acceleration debuff and "Exhausted" status effect
-            if (Stamina <= Config.ExhaustionThreshold.Value)
+            if (StaminaExhaustionAdjusted <= Config.ExhaustionThreshold.Value)
             {
-                if ((!RunKey || Stamina <= Config.StaminaMinimum.Value))
-                {
-                    AddExhausted();
-                }
+                AddExhausted();
             }
         }
 
         public void CheckAndRemoveExhaustion(float dt)
         {
-            if (Config.PushingWarms.Value && IsWarmedUp && !IsFreezing && Stamina < Config.PushingThreshold.Value && RunKey)
+            if (ExhaustionBuildup < 0f && StaminaRegenTimer <= 0f)
+            {
+                ExhaustionBuildup = Mathf.Clamp(ExhaustionBuildup + GetStaminaRegenAmount(dt), Config.StaminaMinimum.Value, 0f);
+                Stamina = 0f;
+            }
+
+            if (Config.PushingWarms.Value && IsWarmedUp && !IsFreezing && StaminaExhaustionAdjusted < Config.PushingThreshold.Value && RunKey)
             {
                 UpdateWarmedUp(dt);
             }
-            if (Player.GetStaminaPercentage() >= Config.PushingThreshold.Value && IsPushing)
+            if (StaminaExhaustionAdjustedPercentage >= Config.PushingThreshold.Value && IsPushing)
             {
                 RemovePushing();
             }
-            if (Player.GetStaminaPercentage() >= Config.ExhaustionRecoveryThreshold.Value && IsExhausted)
+            if (StaminaExhaustionAdjustedPercentage >= Config.ExhaustionRecoveryThreshold.Value && IsExhausted)
             {
                 RemoveExhausted();
             }
@@ -204,21 +216,6 @@ namespace Exhaustion.Managers
                 Player.AddStamina(ParryRefundAmount);
         }
 
-        public void UpdateStamina(float amount)
-        {
-            Stamina = Mathf.Clamp(Stamina - amount, Config.StaminaMinimum.Value, MaxStamina);
-            StaminaRegenTimer = StaminaRegenDelay;
-        }
-
-        public void UpdateMaxStamina(float max, bool flashBar)
-        {
-            if (max > MaxStamina && flashBar)
-                Hud.instance?.StaminaBarUppgradeFlash();
-
-            MaxStamina = max;
-            Stamina = Mathf.Clamp(Stamina, Config.StaminaMinimum.Value, MaxStamina);
-        }
-
         public void Destroy(Player player)
         {
             if (Player != player)
@@ -241,6 +238,19 @@ namespace Exhaustion.Managers
             Player.m_acceleration = Config.Acceleration.Value;
         }
 
+        private float GetStaminaRegenAmount(float dt)
+        {
+            float baseModifier = 1f;
+            if (Player.IsBlocking())
+                baseModifier *= 0.8f;
+            if ((Player.IsSwiming() && !Player.IsOnGround()) || Player.InAttack() || Player.InDodge() || WallRunning || CheckEncumbered())
+                baseModifier = 0.0f;
+            float regenAmount = (StaminaRegen + (float)(1.0 - StaminaExhaustionAdjusted / MaxStamina) * StaminaRegen * Player.m_staminaRegenTimeMultiplier) * baseModifier;
+            float staminaMultiplier = 1f;
+            SEMan.ModifyStaminaRegen(ref staminaMultiplier);
+            return regenAmount * staminaMultiplier * dt;
+        }
+
         private void AddPushing()
         {
             if (!IsPushing)
@@ -255,7 +265,7 @@ namespace Exhaustion.Managers
                     SEMan.RemoveStatusEffect("Pushing");
 
                 SEMan.AddStatusEffect("Exhausted");
-                Acceleration = Config.Acceleration.Value;
+                Acceleration = Config.ExhaustedAcceleration;
             }
         }
 
