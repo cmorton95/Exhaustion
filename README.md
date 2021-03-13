@@ -37,11 +37,18 @@ The plugin comes pre-configured with settings that make gameplay more interestin
 * [BepInEx](https://valheim.thunderstore.io/package/denikson/BepInExPack_Valheim/)
 * [ValheimLib](https://valheim.thunderstore.io/package/ValheimModding/ValheimLib/)
 
+## Plugin compatibility
+* Fitness Skill: compatible, Exhaustion's stamina regen will be overwritten by this mod however
+* Useful Paths: compatible
+* Pre-workout: compatible, food burn time multiplier *may* not work however
+
 ## Installation
 Install like any other BepInEx plugin, drop the dll into the BepInEx folder in the Valheim game directory. Configuration is done through the 7dd.dev.exhaustion.cfg file under BepInEx/config.
 
 ## Notes
-Completely untested in multiplayer. If every client (and presumably the server) has the mod it might work, but I may not support issues with multiplayer.
+Only a small amount of testing has been done in multiplayer. If every client has the mod it might work, but I may not support issues with multiplayer.
+
+Please feel free to tell me if you encounter any compatibility issues, though I can't guarantee I will be able to fix them.
 
 Please report any issues on Github.
 
