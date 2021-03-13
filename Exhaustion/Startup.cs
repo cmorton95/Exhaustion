@@ -15,6 +15,8 @@ namespace Exhaustion
     {
         public void Awake()
         {
+            Log.Init(Logger);
+
             RebalanceConfig.Bind(Config);
 
             SetupStatusEffects();
@@ -29,12 +31,14 @@ namespace Exhaustion
         {
             var harmony = new Harmony("dev.7dd.exhaustion");
             harmony.PatchAll();
+            Log.LogInfo("Patching complete");
         }
 
         private void SetupIcons()
         {
             Utilities.WarmSprite = Prefab.Cache.GetPrefab<Sprite>("Warm");
             Utilities.SweatSprite = Prefab.Cache.GetPrefab<Sprite>("Wet");
+            Log.LogInfo("Sprites retrieved");
         }
 
         private void SetupEffects()
@@ -50,14 +54,16 @@ namespace Exhaustion
                 m_randomRotation = false,
                 m_scale = true
             };
+            Log.LogInfo("VFX retrieved");
         }
 
         private void SetupStatusEffects()
         {
-            ObjectDBHelper.Add(new CustomStatusEffect(ScriptableObject.CreateInstance<StatusEffects.SE_Encumberance>(), true));
+            ObjectDBHelper.Add(new CustomStatusEffect(ScriptableObject.CreateInstance<StatusEffects.SE_Encumbrance>(), true));
             ObjectDBHelper.Add(new CustomStatusEffect(ScriptableObject.CreateInstance<StatusEffects.SE_Exhausted>(), true));
             ObjectDBHelper.Add(new CustomStatusEffect(ScriptableObject.CreateInstance<StatusEffects.SE_Pushing>(), true));
             ObjectDBHelper.Add(new CustomStatusEffect(ScriptableObject.CreateInstance<StatusEffects.SE_Warmed>(), true));
+            Log.LogInfo("Status effects injected");
         }
     }
 }

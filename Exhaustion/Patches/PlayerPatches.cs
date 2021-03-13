@@ -1,4 +1,5 @@
 ﻿using Exhaustion.Managers;
+using Exhaustion.Utility;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -47,7 +48,7 @@ namespace Exhaustion.Patches
         }
 
         /// <summary>
-        ///     Patch Awake to inject our configured values and apply the Encumberance status effect if enabled
+        ///     Patch Awake to inject our configured values and apply the Encumbrance status effect if enabled
         /// </summary>
         [HarmonyPatch(typeof(Player), "Awake")]
         class PlayerAwakePatch
@@ -61,7 +62,9 @@ namespace Exhaustion.Patches
 
                 if (!__instance.IsOwner())
                     return;
-                
+
+                Log.LogInfo($"Creating new shim for player with ID: {__instance.GetZDOID()}");
+
                 var shim = new PlayerShim(__instance);
                 OnHaveStamina += shim.CheckStamina;
                 BeforeUseStamina += shim.GetNewStaminaUsage;
@@ -69,27 +72,32 @@ namespace Exhaustion.Patches
 
                 if (Config.ParryRefundEnable.Value)
                 {
+                    Log.LogInfo("*Parry modifications enabled");
                     BeforeBlockAttack += shim.UpdateParry;
                     OnBlockAttack += shim.UpdateParryRefund;
                 }
                 if (Config.ExhaustionEnable.Value)
                 {
+                    Log.LogInfo("*Exhaustion modifications enabled");
                     OnUseStamina += shim.CheckAndAddExhaustion;
                     OnUpdateStats += shim.CheckAndRemoveExhaustion;
                 }
                 if (Config.EncumberanceAltEnable.Value)
                 {
+                    Log.LogInfo("*Encumbrance modifications enabled");
                     OnIsEncumbered += shim.CheckEncumbered;
                 }
                 if (Config.BaseHealthStaminaEnable.Value)
                 {
+                    Log.LogInfo("*Health/Stamina modifications enabled");
                     OnGetBaseFoodHP += shim.GetBaseHp;
                 }
 
                 var seman = __instance.GetSEMan();
-                if (Config.EncumberanceAltEnable.Value && !seman.HaveStatusEffect("Encumberance"))
+                if (Config.EncumberanceAltEnable.Value && !seman.HaveStatusEffect("Encumbrance"))
                 {
-                    seman.AddStatusEffect("Encumberance");
+                    seman.AddStatusEffect("Encumbrance");
+                    Log.LogInfo("*Applied encumbrance status effect");
                 }
             }
         }
@@ -197,7 +205,7 @@ namespace Exhaustion.Patches
                     {
                         if (ops[i + 1].opcode == System.Reflection.Emit.OpCodes.Ldc_R4)
                         {
-                            Debug.Log($"Patching health ({ops[i].opcode}) to {Config.BaseHealth.Value}");
+                            Log.LogInfo($"Patching health ({ops[i].opcode}) to {Config.BaseHealth.Value}");
                             ops[i + 1].operand = Config.BaseHealth.Value;
                             foodPatched = true;
                             continue;
@@ -207,7 +215,7 @@ namespace Exhaustion.Patches
                     {
                         if (ops[i + 1].opcode == System.Reflection.Emit.OpCodes.Ldc_R4)
                         {
-                            Debug.Log($"Patching stamina ({ops[i].opcode}) to {Config.BaseStamina.Value}");
+                            Log.LogInfo($"Patching stamina ({ops[i].opcode}) to {Config.BaseStamina.Value}");
                             ops[i + 1].operand = Config.BaseStamina.Value;
                             stamPatched = true;
                             continue;

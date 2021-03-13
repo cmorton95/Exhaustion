@@ -1,4 +1,5 @@
 ﻿using Exhaustion.StatusEffects;
+using Exhaustion.Utility;
 using HarmonyLib;
 using UnityEngine;
 using Config = Exhaustion.Utility.RebalanceConfig;
@@ -120,7 +121,7 @@ namespace Exhaustion.Managers
 
             ConfigurePlayer();
 
-            Debug.Log($"Create player shim: {ZDOID}");
+            Log.LogInfo($"Create player shim: {ZDOID}");
         }
 
         public bool CheckStamina(float amount)
@@ -201,6 +202,7 @@ namespace Exhaustion.Managers
             //Use configured parry time
             if (timerVal > Config.ParryTime.Value && timerVal != -1.0f)
             {
+                Log.LogInfo($"Missed parry by {System.Math.Round(timerVal - Config.ParryTime.Value, 2)}s");
                 ParryTimer = 0.26f; //skip parry timing @0.25
             }
             else if (timerVal <= Config.ParryTime.Value && blocker.m_shared.m_timedBlockBonus > 1.0f)
@@ -213,7 +215,10 @@ namespace Exhaustion.Managers
         public void UpdateParryRefund(bool blockSuccess)
         {
             if (blockSuccess && ParryRefundAmount > 0.0f)
+            {
                 Player.AddStamina(ParryRefundAmount);
+                Log.LogInfo($"Refunded {ParryRefundAmount} stamina for a successful parry");
+            }
         }
 
         public void Destroy(Player player)
@@ -224,7 +229,7 @@ namespace Exhaustion.Managers
             Player = null;
             SEMan = null;
             Patches.PlayerPatches.Unassign(this);
-            Debug.Log($"Destroyed player shim: {ZDOID}");
+            Log.LogInfo($"Destroyed player shim: {ZDOID}");
         }
 
         private void ConfigurePlayer()
@@ -236,6 +241,7 @@ namespace Exhaustion.Managers
             Player.m_jumpStaminaUsage = Config.JumpStamina.Value;
             Player.m_encumberedStaminaDrain = Config.EncumberedDrain.Value;
             Player.m_acceleration = Config.Acceleration.Value;
+            Log.LogInfo($"Configured player attributes");
         }
 
         private float GetStaminaRegenAmount(float dt)
@@ -254,7 +260,10 @@ namespace Exhaustion.Managers
         private void AddPushing()
         {
             if (!IsPushing)
+            {
                 SEMan.AddStatusEffect("Pushing");
+                Log.LogInfo($"Applied Pushing status effect");
+            }
         }
 
         private void AddExhausted() 
@@ -266,22 +275,30 @@ namespace Exhaustion.Managers
 
                 SEMan.AddStatusEffect("Exhausted");
                 Acceleration = Config.ExhaustedAcceleration;
+                Log.LogInfo($"Applied Exhausted status effect");
             }
         }
 
         private void AddWarmedUp()
         {
             if (!IsWarmedUp)
+            {
                 WarmedStatusEffect = (SE_Warmed)SEMan.AddStatusEffect("Warmed");
+                Log.LogInfo($"Applied Warmed Up status effect");
+            }
         }
 
-        private void RemovePushing() =>
+        private void RemovePushing()
+        {
             SEMan.RemoveStatusEffect("Pushing");
+            Log.LogInfo($"Removed Pushing status effect");
+        }
 
         private void RemoveExhausted()
         {
             SEMan.RemoveStatusEffect("Exhausted");
             Acceleration = Config.Acceleration.Value;
+            Log.LogInfo($"Removed Exhausted status effect");
         }
 
         private void UpdateWarmedUp(float dt)
